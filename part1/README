@@ -1,0 +1,82 @@
+Khyati Mardia - 1215346587
+
+Assignment - 2 - Part 1
+
+Instructions to run a program on target:
+Connect pins on galileo board and same input to be given. You can collect multiple sensors with different echo and trigger pins.
+
+file name main.c is for user space and hcsr_driver.c is for kernel space.
+
+To connect galileo board using putty:
+i. type in host - sudo chmod 777 /dev/ttyUSB0
+ii. connect it through putty - with settings /dev/ttyUSB0 with speed 115200
+iii. set IP as 192.168.0.5
+
+To make for galileo:
+Go to the folder and do make all
+
+Note: program is warning and error free
+
+To copy the program to target(galileo):
+scp hcsr_test  root@192.168.0.5:/home/root
+scp hcsr_driver.ko root@192.168.0.5:/home/root
+
+To run the program:
+1. Run the script with argument (number of devices required)
+
+eg. for 2 device
+./run.sh 2
+
+or you can load module by using below
+insmod hcsr_driver.ko Number_Of_Devices=2
+
+This script removes earlier loaded driver, loads the new driver and gives the access using chmod to all the created devices under /dev/--
+
+2. Run hcsr_test with argument (number of devices required)
+
+eg, for 2 device
+./hcsr_test 2
+
+It would ask for echo and trigger pins for HCSRs and it prints below result.
+
+Resu lt in user space: (for 2 devices) (you can see that using ssh root@192.168.0.5)
+
+Enter IO pin for trigger hcsr0 
+0
+Enter IO pin for echo hcsr0 
+1
+Enter the number of samples per measurement hcsr0 
+7
+Enter the sampling period hcsr0 
+900
+Enter IO pin for trigger hcsr1 
+2
+Enter IO pin for echo hcsr1 
+3
+Enter the number of samples per measurement hcsr1 
+7
+Enter the sampling period hcsr1 
+900
+hcsr1 device is opened
+hcsr0 device is opened
+distance is 8 (cm) time stamp is 180493060927 for HCSR0
+distance is 9 (cm) time stamp is 180532951900 for HCSR1
+
+Kernel prints all info about step wise execution in HCSR devices. (you can observe all kernel logs in putty or screen using dmesg)
+Make file is modified for X86 architecture by giving relevant compiler paths and also PATH_variable.
+
+Observations and working:
+
+pins are configured as per user inputs for multiple devices.
+main program writes and reads on HCSR devices simultaneously using pthreads.
+driver program calculates the average distance and returns the oldest value from the buffer.
+
+Distance is calculated as below.
+distance = (pulse width * Ultrasonic spreading velocity in air) / 2
+
+Where,  Pulse Width = difference in system ticks , generated at start time and stop time
+	1 tick = 1/400MHz(Frequency of Intel Galileo board)
+	1 tick = 0.25 * 10^-8 sec
+	distance = (diff in ticks)* 0.25*10^-8 * 340 (m/sec) / 2
+
+
